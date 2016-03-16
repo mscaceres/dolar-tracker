@@ -3,7 +3,7 @@ import dolar_history
 import datetime
 import plot
 import scraping
-import __main__
+import persitence
 
 
 DATE1 = datetime.date(2016, 5, 12)
@@ -44,8 +44,8 @@ def history2():
 
 # I have to change this test to use streams instead of paths
 def test_save_history(history):
-    __main__.save_history(history, r"test.pkl")
-    other = __main__.load_history(r"test.pkl")
+    persitence.save_history(history, r"test.pkl")
+    other = persitence.load_history(r"test.pkl")
     assert (len(other.sell_prices._points.keys()) == 3)
     assert (len(other.buy_prices._points.keys()) == 3)
     assert (len(other.sell_prices._points[DATE1].keys()) == 2)
