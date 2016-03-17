@@ -8,14 +8,9 @@ def to_day_str(dates):
 
 
 def make_dolar_dashboard(dolar_history):
-    fig = plotly.tools.make_subplots(2, 2,
+    fig = plotly.tools.make_subplots(1, 2,
                                      subplot_titles=("Precio de Compra",
-                                                     "Precio de Venta",
-                                                     "Variacion Precio de Compra",
-                                                     "Variacion Precio de Venta"),
-                                     shared_xaxes=True)
-    fig["layout"]['yaxis1'].update(range=[10, 20])
-    fig["layout"]['yaxis2'].update(range=[10, 20])
+                                                     "Precio de Venta"))
     # plot max, min and avg buy price
     dates, max_buy_prices = zip(*dolar_history.buy_prices.max_points)
     _, min_buy_prices = zip(*dolar_history.buy_prices.min_points)
@@ -43,6 +38,15 @@ def make_dolar_dashboard(dolar_history):
     fig.append_trace(max_line, 1, 1)
     fig.append_trace(min_line, 1, 1)
     fig.append_trace(avg_line, 1, 1)
+    # plot %variation per day
+    if dolar_history.buy_prices.day_variations:
+        dates, variations = zip(*dolar_history.buy_prices.day_variations)
+        dates = to_day_str(dates)
+        var_line = plotly.graph_objs.Bar(x=dates,
+                                         y=variations,
+                                         name="% Variacion")
+        fig.append_trace(var_line, 1, 1)
+
     # plot max, min, and avg sell price
     dates, max_sell_prices = zip(*dolar_history.sell_prices.max_points)
     _, min_sell_prices = zip(*dolar_history.sell_prices.min_points)
@@ -70,28 +74,14 @@ def make_dolar_dashboard(dolar_history):
     fig.append_trace(min_line, 1, 2)
     fig.append_trace(avg_line, 1, 2)
     # plot %variation per day
-    if dolar_history.buy_prices.day_variations:
-        dates, variations = zip(*dolar_history.buy_prices.day_variations)
-        dates = to_day_str(dates)
-        var_line = plotly.graph_objs.Scatter(x=dates,
-                                             y=variations,
-                                             mode="lines+markers",
-                                             name="% Variacion",
-                                             line=dict(dash="solid"),
-                                             connectgaps=True)
-        fig.append_trace(var_line, 2, 1)
-    # plot %variation per day
     if dolar_history.sell_prices.day_variations:
         dates, variations = zip(*dolar_history.sell_prices.day_variations)
         dates = to_day_str(dates)
 
-        var_line = plotly.graph_objs.Scatter(x=dates,
+        var_line = plotly.graph_objs.Bar(x=dates,
                                              y=variations,
-                                             mode="lines+markers",
-                                             name="% Variacion",
-                                             line=dict(dash="solid"),
-                                             connectgaps=True)
-        fig.append_trace(var_line, 2, 2)
+                                             name="% Variacion")
+        fig.append_trace(var_line, 1, 2)
     plotly.offline.plot(fig)
 
     # plot %variation accumulated per month
