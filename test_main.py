@@ -79,3 +79,13 @@ def test_make_dashboard(history2):
 
 def test_variations(history):
     assert(len(history.buy_prices.day_variations) == len(history.buy_prices.avg_points)-1)
+
+
+def test_find_previous_date():
+    date = dolar_history.PriceHistory.find_previous_date(DATE3, [DATE1,DATE2,DATE3,DATE4,DATE5])
+    assert date == DATE2
+
+def test_find_previous_date2():
+    date = dolar_history.PriceHistory.find_previous_date(DATE5, [DATE1,DATE2,DATE3,DATE4,DATE5])
+    assert date == DATE4
+

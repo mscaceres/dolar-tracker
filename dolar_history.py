@@ -1,5 +1,6 @@
 import collections
 import datetime
+import itertools
 
 class PriceHistory:
     def __init__(self, name):
@@ -60,9 +61,13 @@ class PriceHistory:
             avg_dict[date] = avg_value
 
     @staticmethod
+    def find_previous_date(date, dates):
+        return next(itertools.dropwhile(lambda x: x >= date, reversed(dates)))
+
+    @staticmethod
     def update_day_variation(variations_dict, source_dict, date):
         if len(source_dict) >= 2:
-            day_before = date - datetime.timedelta(days=1)
+            day_before = PriceHistory.find_previous_date(date, source_dict.keys())
             variation = ((source_dict[date] - source_dict[day_before]) / source_dict[day_before]) * 100
             variations_dict[date] = variation
 
