@@ -1,9 +1,9 @@
 import pytest
 import datetime
-from dolar_tracker import plot
-from dolar_tracker import scraping
-from dolar_tracker import persitence
-from dolar_tracker import dolar_history
+from dollar_tracker import plot
+from dollar_tracker import scraping
+from dollar_tracker import persitence
+from dollar_tracker import dollar_history
 
 DATE1 = datetime.date(2016, 5, 12)
 DATE2 = datetime.date(2016, 5, 13)
@@ -13,7 +13,7 @@ DATE5 = datetime.date(2016, 5, 16)
 
 @pytest.fixture
 def history():
-    history = dolar_history.DolarHistory()
+    history = dollar_history.DolarHistory()
 
     history.add_point("source1", scraping.DolarPoint(date=DATE1, buy_price=12.50, sell_price=15))
     history.add_point("source2", scraping.DolarPoint(date=DATE1, buy_price=12.51, sell_price=15.01))
@@ -26,7 +26,7 @@ def history():
 
 @pytest.fixture
 def history2():
-    history = dolar_history.DolarHistory()
+    history = dollar_history.DolarHistory()
 
     history.add_point("source1", scraping.DolarPoint(date=DATE1, buy_price=12.50, sell_price=15))
     history.add_point("source2", scraping.DolarPoint(date=DATE1, buy_price=12.20, sell_price=15.40))
@@ -81,10 +81,10 @@ def test_variations(history):
 
 
 def test_find_previous_date():
-    date = dolar_history.PriceHistory.find_previous_date(DATE3, [DATE1,DATE2,DATE3,DATE4,DATE5])
+    date = dollar_history.PriceHistory.find_previous_date(DATE3, [DATE1, DATE2, DATE3, DATE4, DATE5])
     assert date == DATE2
 
 def test_find_previous_date2():
-    date = dolar_history.PriceHistory.find_previous_date(DATE5, [DATE1,DATE2,DATE3,DATE4,DATE5])
+    date = dollar_history.PriceHistory.find_previous_date(DATE5, [DATE1, DATE2, DATE3, DATE4, DATE5])
     assert date == DATE4
 

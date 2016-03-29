@@ -1,4 +1,4 @@
 import sys
-import dolar_tracker.main
+import dollar_tracker.main
 
-sys.exit(dolar_tracker.main.main())
+sys.exit(dollar_tracker.main.main())

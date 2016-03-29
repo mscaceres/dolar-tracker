@@ -1,3 +1,4 @@
 beautifulsoup4==4.4.1
 plotly==1.9.6
 pytest==2.8.3
+docopt==0.6.2
