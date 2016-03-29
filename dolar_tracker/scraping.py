@@ -5,10 +5,12 @@ import bs4
 
 DolarPoint = collections.namedtuple("DolarPoint", "date, buy_price, sell_price")
 
+
 def get_scrap_functions():
     """Look for funtions with the name 'scrap_<source>' in the current file.
     It return the pair (<source>, function)"""
     return [(k.replace("scrap_", ""), v) for k, v in globals().items() if k.startswith("scrap_") and callable(v)]
+
 
 def scrap_la_nacion():
     import json
@@ -17,12 +19,13 @@ def scrap_la_nacion():
     dict = json.loads(json_response[json_response.find("{"):json_response.find("}")+1])
     buy_price = float(dict["CasaCambioCompraValue"].replace(",", "."))
     sell_price = float(dict["CasaCambioVentaValue"].replace(",", "."))
-    date = datetime.date.today() #datetime.datetime.strptime(dict["Date"][:dict["Date"].find("T")], "%Y-%m-%d")
+    #the returned json does not look that is updating the date...
+    #datetime.datetime.strptime(dict["Date"][:dict["Date"].find("T")], "%Y-%m-%d")
+    date = datetime.date.today()
     print("La Nacion")
     print("Fecha:", date)
     print("Compra:", buy_price)
     print("Venta:", sell_price)
-
     return DolarPoint(date=date, buy_price=buy_price, sell_price=sell_price)
 
 

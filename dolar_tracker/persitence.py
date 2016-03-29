@@ -1,5 +1,5 @@
 import pickle
-import dolar_history
+import dolar_tracker.dolar_history
 
 HISTORY_FILE = "dolar_history.pkl"
 
@@ -15,5 +15,5 @@ def load_history(path):
         with open(path, 'rb') as input:
             history_obj = pickle.load(input)
     except IOError:
-        history_obj = dolar_history.DolarHistory()
+        history_obj = dolar_tracker.dolar_history.DolarHistory()
     return history_obj

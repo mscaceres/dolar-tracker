@@ -1,10 +1,9 @@
 import pytest
-import dolar_history
 import datetime
-import plot
-import scraping
-import persitence
-
+from dolar_tracker import plot
+from dolar_tracker import scraping
+from dolar_tracker import persitence
+from dolar_tracker import dolar_history
 
 DATE1 = datetime.date(2016, 5, 12)
 DATE2 = datetime.date(2016, 5, 13)
