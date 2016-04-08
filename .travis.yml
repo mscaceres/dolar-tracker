@@ -6,8 +6,8 @@ services:
     - docker
 before_install:
     - docker build -t dollar-tracker .
-    - docker run dollar-tracker /bin/sh -c "py.test /usr/src/app/dollar-tracker/tests"
+
 script:
-    - py.test /usr/src/app/dollar-tracker/tests
+    - docker run dollar-tracker /bin/sh -c "py.test /usr/src/app/dollar-tracker/tests"
 
 
