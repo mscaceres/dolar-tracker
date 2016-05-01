@@ -1,5 +1,6 @@
 import pytest
 import datetime
+import collections
 from dollar_tracker import plot
 from dollar_tracker import scraping
 from dollar_tracker import persitence
@@ -84,7 +85,60 @@ def test_find_previous_date():
     date = dollar_history.PriceHistory.find_previous_date(DATE3, [DATE1, DATE2, DATE3, DATE4, DATE5])
     assert date == DATE2
 
+
 def test_find_previous_date2():
     date = dollar_history.PriceHistory.find_previous_date(DATE5, [DATE1, DATE2, DATE3, DATE4, DATE5])
     assert date == DATE4
 
+
+def test_find_previous_date3():
+    dates = [datetime.date(2014, 11, 2),
+             datetime.date(2014, 12, 20),
+             datetime.date(2015, 1, 2),
+             datetime.date(2015, 1, 3),
+             datetime.date(2015, 2, 2)]
+
+    previous_date = dollar_history.PriceHistory.find_previous_date(datetime.date(2015, 1, 1), dates)
+    assert dates[1] == previous_date
+
+
+def test_update_empty_month_variations():
+    source_dict = collections.OrderedDict([(datetime.date(2015, 3, 19), 7),
+                                           (datetime.date(2015, 3, 20), 7),
+                                           (datetime.date(2015, 4, 20), -1),
+                                           (datetime.date(2015, 4, 29), 5),
+                                           (datetime.date(2015, 4, 30), 2)])
+    date = datetime.date(2015, 4, 30)
+    variation = {}
+    dollar_history.PriceHistory.update_month_variation(variation, source_dict, date)
+    assert variation[date.month] == 13
+
+
+def test_update_month_variations():
+    source_dict = collections.OrderedDict([(datetime.date(2015, 3, 19), 7),
+                                           (datetime.date(2015, 3, 20), 7),
+                                           (datetime.date(2015, 4, 20), -1),
+                                           (datetime.date(2015, 4, 29), 5),
+                                           (datetime.date(2015, 4, 30), 2)])
+    date = datetime.date(2015, 4, 30)
+    variation = {date.month: 1}
+    dollar_history.PriceHistory.update_month_variation(variation, source_dict, date)
+    assert variation[date.month] == 13
+
+
+def test_update_day_variations_negative():
+    source_dict = collections.OrderedDict([(datetime.date(2015, 4, 29), 5),
+                                           (datetime.date(2015, 4, 30), 2)])
+    date = datetime.date(2015, 4, 30)
+    variation = {}
+    dollar_history.PriceHistory.update_day_variation(variation, source_dict, date)
+    assert variation[date] == -60.0
+
+
+def test_update_day_variations_positive():
+    source_dict = collections.OrderedDict([(datetime.date(2015, 4, 29), 2),
+                                           (datetime.date(2015, 4, 30), 5)])
+    date = datetime.date(2015, 4, 30)
+    variation = {}
+    dollar_history.PriceHistory.update_day_variation(variation, source_dict, date)
+    assert variation[date] == 150.0

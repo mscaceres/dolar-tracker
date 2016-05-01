@@ -1,4 +1,5 @@
 import collections
+import calendar
 import datetime
 import itertools
 
@@ -18,11 +19,12 @@ class PriceHistory:
         if date in self._points:
             self._points[date][source] = price
         else:
-            self._points[date] = {source:price}
-        self.update_limit_values(self._max_points, date, price, max)
-        self.update_limit_values(self._min_points, date, price, min)
+            self._points[date] = {source: price}
+        self._max_points[date] = max(price, self._max_points.get(date, price))
+        self._min_points[date] = min(price, self._min_points.get(date, price))
         self.update_avg_values(self._avg_points, self._points, date)
         self.update_day_variation(self._day_variations, self._avg_points, date)
+        self.update_month_variation(self._month_variations, self._day_variations, date)
 
     @property
     def max_points(self):
@@ -49,13 +51,6 @@ class PriceHistory:
         return self._year_variations.items()
 
     @staticmethod
-    def update_limit_values(price_dict, date, price, op):
-        if date in price_dict:
-            price_dict[date] = op(price, price_dict[date])
-        else:
-            price_dict[date] = price
-
-    @staticmethod
     def update_avg_values(avg_dict, source_dict, date):
         if date in source_dict:
             avg_value = sum(source_dict[date].values())/len(source_dict[date])
@@ -63,7 +58,10 @@ class PriceHistory:
 
     @staticmethod
     def find_previous_date(date, dates):
-        return next(itertools.dropwhile(lambda x: x >= date, reversed(dates)))
+        try:
+            return next(itertools.dropwhile(lambda x: x >= date, reversed(dates)))
+        except StopIteration:
+            return None
 
     @staticmethod
     def update_day_variation(variations_dict, source_dict, date):
@@ -73,8 +71,13 @@ class PriceHistory:
             variations_dict[date] = variation
 
     @staticmethod
-    def update_month_variation(self):
-        pass
+    def update_month_variation(month_variations, source_dict, date):
+        if len(source_dict) >= 2:
+            ldpm = PriceHistory.find_previous_date(datetime.date(date.year, date.month, 1), source_dict.keys())
+            variation = sum(source_dict[day] for day in
+                            itertools.takewhile(lambda x: x.month == date.month or x == ldpm,
+                                                reversed(source_dict.keys())))
+            month_variations[date.month] = variation
 
 
 class DolarHistory:

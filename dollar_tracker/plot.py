@@ -1,3 +1,4 @@
+import calendar
 import plotly.graph_objs
 import plotly.tools
 import plotly.offline
@@ -8,9 +9,12 @@ def to_day_str(dates):
 
 
 def make_dolar_dashboard(dolar_history):
-    fig = plotly.tools.make_subplots(1, 2,
+    fig = plotly.tools.make_subplots(2, 2,
                                      subplot_titles=("Precio de Compra",
-                                                     "Precio de Venta"))
+                                                     "Precio de Venta",
+                                                     "Acumulado Mensual Compra",
+                                                     "Acumulado Mensual Venta"),
+                                     shared_yaxes=True)
     # plot max, min and avg buy price
     dates, max_buy_prices = zip(*dolar_history.buy_prices.max_points)
     _, min_buy_prices = zip(*dolar_history.buy_prices.min_points)
@@ -20,13 +24,13 @@ def make_dolar_dashboard(dolar_history):
                                          y=max_buy_prices,
                                          mode="lines+markers",
                                          name="Maximo",
-                                         line=dict(dash="dash"),
+                                         line=dict(dash="dot"),
                                          connectgaps=True)
     min_line = plotly.graph_objs.Scatter(x=dates,
                                          y=min_buy_prices,
                                          mode="lines+markers",
                                          name="Minimo",
-                                         line=dict(dash="dash"),
+                                         line=dict(dash="dot"),
                                          connectgaps=True)
     avg_line = plotly.graph_objs.Scatter(x=dates,
                                          y=avg_buy_prices,
@@ -56,13 +60,13 @@ def make_dolar_dashboard(dolar_history):
                                          y=max_sell_prices,
                                          mode="lines+markers",
                                          name="Maximo",
-                                         line=dict(dash="dash"),
+                                         line=dict(dash="dot"),
                                          connectgaps=True)
     min_line = plotly.graph_objs.Scatter(x=dates,
                                          y=min_sell_prices,
                                          mode="lines+markers",
                                          name="Minimo",
-                                         line=dict( dash="dash"),
+                                         line=dict( dash="dot"),
                                          connectgaps=True)
     avg_line = plotly.graph_objs.Scatter(x=dates,
                                          y=avg_sell_prices,
@@ -82,7 +86,21 @@ def make_dolar_dashboard(dolar_history):
                                              y=variations,
                                              name="% Variacion")
         fig.append_trace(var_line, 1, 2)
-    plotly.offline.plot(fig)
+
 
     # plot %variation accumulated per month
+    if dolar_history.buy_prices.month_variations:
+        months, variations = zip(*dolar_history.buy_prices.month_variations)
+        var_line = plotly.graph_objs.Bar(x=list(map(lambda x: calendar.month_name[x], months)),
+                                         y=variations,
+                                         name="% Variacion")
+        fig.append_trace(var_line, 2, 1)
+    if dolar_history.sell_prices.month_variations:
+        months, variations = zip(*dolar_history.sell_prices.month_variations)
+        var_line = plotly.graph_objs.Bar(x=list(map(lambda x: calendar.month_name[x], months)),
+                                         y=variations,
+                                         name="% Variacion")
+        fig.append_trace(var_line, 2, 2)
+
     # plot %variation accumulated per year
+    plotly.offline.plot(fig)
