@@ -7,3 +7,4 @@ __pycache__/
 *.pkl
 /tests/.cache
 tests/__pycache__/
+beautifulsoup4-4.4.1-py3-none-any.whl docopt-0.6.2-py2.py3-none-any.whl dollar_tracker-1.0.0.dev1-py3-none-any.whl plotly-1.9.6-py3-none-any.whl pytz-2016.3-py2.py3-none-any.whl requests-2.9.1-py2.py3-none-any.whl six-1.10.0-py2.py3-none-any.whl

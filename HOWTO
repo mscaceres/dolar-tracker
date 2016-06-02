@@ -1,0 +1,28 @@
+Entrypoints:
+============
+By default the container will run the "dollar-tracker" script created by the setup.py config file with the "track" parameter.
+to overwrite this parameter, we just need to pass the parameter after the image name in the docker run command 
+
+volume history:
+===============
+volume set to /usr/src/app/dollar-tracker which is the working directory of the container
+when running the application we need to set -v <host_folder>:/usr/src/app/dollar-tracker  so the application can be run without especify the --path option
+
+dollar points:
+=============
+cron job that runs periodically 
+	-v <host_folder>:/usr/src/app/dollar-tracker dollar-tracker track: will add points to the history that will be saved in /usr/src/app/dollar-tracker
+
+
+docker run -v /home/mauro/Inversiones/:/usr/src/app/dollar-tracker -i -t dollar-tracker
+
+viewing the plot:
+================
+run the container with
+	-v <host_folder>:/usr/src/app/dollar-tracker dollar-tracker plot this will create a HTML file in the host 
+
+docker run -v /home/mauro/Inversiones/:/usr/src/app/dollar-tracker -i -t dollar-tracker plot	  
+
+
+
+
