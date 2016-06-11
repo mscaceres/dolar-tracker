@@ -1,7 +1,7 @@
 import pickle
 import dollar_tracker.dollar_history
 
-HISTORY_FILE = "dolar_history.pkl"
+HISTORY_FILE = "dollar_history.pkl"
 
 
 def save_history(history, path):

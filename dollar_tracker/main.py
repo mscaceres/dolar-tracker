@@ -19,12 +19,12 @@ from dollar_tracker import persitence
 
 
 def main():
-    args = docopt(__doc__,version='0.1')
+    args = docopt(__doc__, version='1.0.0.dev1')
     history_path = os.path.join(args['--path'], persitence.HISTORY_FILE)
     history = persitence.load_history(history_path)
     if args['track']:
-        for source, scrap_page in scraping.get_scrap_functions():
-            history.add_point(source, scrap_page())
+        for source, scrap_page_func in scraping.get_scrap_functions():
+            history.add_point(source, scrap_page_func())
     elif args['plot']:
         plot.make_dolar_dashboard(history)
     persitence.save_history(history, history_path)

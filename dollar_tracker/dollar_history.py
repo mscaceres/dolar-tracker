@@ -1,5 +1,4 @@
 import collections
-import calendar
 import datetime
 import itertools
 
@@ -86,6 +85,6 @@ class DolarHistory:
         self.buy_prices = PriceHistory("Compra")
         self.sell_prices = PriceHistory("Venta")
 
-    def add_point(self, source, dolar_point):
-        self.buy_prices.add_point(source, dolar_point.date, dolar_point.buy_price)
-        self.sell_prices.add_point(source, dolar_point.date, dolar_point.sell_price)
+    def add_point(self, source, dollar_point):
+        self.buy_prices.add_point(source, dollar_point.date, dollar_point.buy_price)
+        self.sell_prices.add_point(source, dollar_point.date, dollar_point.sell_price)

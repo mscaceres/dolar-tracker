@@ -1,6 +1,5 @@
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
-import io
 import os
 import sys
 

@@ -3,7 +3,7 @@ import datetime
 import urllib
 import bs4
 
-DolarPoint = collections.namedtuple("DolarPoint", "date, buy_price, sell_price")
+DollarPoint = collections.namedtuple("DollarPoint", "date, buy_price, sell_price")
 
 
 def get_scrap_functions():
@@ -26,7 +26,7 @@ def scrap_la_nacion():
     print("Fecha:", date)
     print("Compra:", buy_price)
     print("Venta:", sell_price)
-    return DolarPoint(date=date, buy_price=buy_price, sell_price=sell_price)
+    return DollarPoint(date=date, buy_price=buy_price, sell_price=sell_price)
 
 
 def scrap_precio_dolar():
@@ -41,4 +41,4 @@ def scrap_precio_dolar():
     print("Fecha:", date)
     print("Compra:", buy_price)
     print("Venta:", sell_price)
-    return DolarPoint(date=date, buy_price=buy_price, sell_price=sell_price)
+    return DollarPoint(date=date, buy_price=buy_price, sell_price=sell_price)
