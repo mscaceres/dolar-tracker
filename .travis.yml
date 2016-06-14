@@ -8,6 +8,6 @@ before_install:
     - docker build -t dollar-tracker .
 
 script:
-    - docker run --entrypoint=py.test ollar-tracker
+    - docker run --entrypoint=py.test dollar-tracker
 
 
