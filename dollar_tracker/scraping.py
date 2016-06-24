@@ -52,4 +52,8 @@ def scrap_ambito():
     buy_price = float(soup.select_one(".columna1 .ultimo big").contents[0].replace(",", "."))
     sell_price = float(soup.select_one(".columna1 .cierreAnterior big").contents[0].replace(",", "."))
     date = datetime.date.today()
+    print("Precio Dolar")
+    print("Fecha:", date)
+    print("Compra:", buy_price)
+    print("Venta:", sell_price)
     return DollarPoint(date=date, buy_price=buy_price, sell_price=sell_price)
