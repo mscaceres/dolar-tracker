@@ -69,12 +69,19 @@ def test_avg_values(history):
 
 def test_get_scrap_functions():
     fnts = scraping.get_scrap_functions()
-    assert (len(fnts) == 2)
+    assert (len(fnts) == 3)
     assert not fnts[0][0].startswith("scrap_")
 
 
 def test_scrap_la_nacion():
     point = scraping.scrap_la_nacion()
+    assert point is not None
+    assert type(point.buy_price) is float
+    assert type(point.sell_price) is float
+
+
+def test_scrap_ambito():
+    point = scraping.scrap_ambito()
     assert point is not None
     assert type(point.buy_price) is float
     assert type(point.sell_price) is float

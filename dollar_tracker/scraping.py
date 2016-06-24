@@ -42,3 +42,14 @@ def scrap_precio_dolar():
     print("Compra:", buy_price)
     print("Venta:", sell_price)
     return DollarPoint(date=date, buy_price=buy_price, sell_price=sell_price)
+
+
+def scrap_ambito():
+    url = "http://www.ambito.com/economia/mercados/monedas/dolar/"
+    data = str(urllib.request.urlopen(url).read())
+    soup = bs4.BeautifulSoup(data, "html.parser")
+    # values = soup.find_all("div", class_="ultimo")
+    buy_price = float(soup.select_one(".columna1 .ultimo big").contents[0].replace(",", "."))
+    sell_price = float(soup.select_one(".columna1 .cierreAnterior big").contents[0].replace(",", "."))
+    date = datetime.date.today()
+    return DollarPoint(date=date, buy_price=buy_price, sell_price=sell_price)
