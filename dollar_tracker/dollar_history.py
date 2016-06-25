@@ -25,6 +25,9 @@ class PriceHistory:
         self.update_day_variation(self._day_variations, self._avg_points, date)
         self.update_month_variation(self._month_variations, self._day_variations, date)
 
+    def get_indicators_by_date(self, date):
+        return self._avg_points.get(date, 0), self._day_variations.get(date, 0), self._month_variations.get(date, 0)
+
     @property
     def max_points(self):
         return self._max_points.items()
@@ -88,3 +91,14 @@ class DolarHistory:
     def add_point(self, source, dollar_point):
         self.buy_prices.add_point(source, dollar_point.date, dollar_point.buy_price)
         self.sell_prices.add_point(source, dollar_point.date, dollar_point.sell_price)
+
+    def get_buy_indicators_by_date(self, date):
+        return self.buy_prices.get_indicators_by_date(date)
+
+    def get_sell_indicators_by_date(self, date):
+        return self.buy_prices.get_indicators_by_date(date)
+
+    def get_indicators_by_date(self, date=None):
+        if date is None:
+            date = datetime.date.today()
+        return self.get_buy_indicators_by_date(date), self.get_sell_indicators_by_date(date)

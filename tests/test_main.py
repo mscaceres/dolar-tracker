@@ -26,6 +26,15 @@ def history():
 
 
 @pytest.fixture
+def one_history():
+    history = dollar_history.DolarHistory()
+
+    history.add_point("source1", scraping.DollarPoint(date=DATE1, buy_price=12.50, sell_price=15))
+    history.add_point("source2", scraping.DollarPoint(date=DATE1, buy_price=12.51, sell_price=15.01))
+    return history
+
+
+@pytest.fixture
 def history2():
     history = dollar_history.DolarHistory()
 
@@ -156,3 +165,12 @@ def test_update_day_variations_positive():
     variation = {}
     dollar_history.PriceHistory.update_day_variation(variation, source_dict, date)
     assert variation[date] == 150.0
+
+def test_indicators_single_value(one_history):
+    buy_indicators, sell_indicators = one_history.get_indicators_by_date(DATE1)
+    assert len(buy_indicators) == 3
+    assert len(sell_indicators) == 3
+    assert 0 == buy_indicators[1]
+    assert 0 == buy_indicators[2]
+    assert 0 == sell_indicators[1]
+    assert 0 == sell_indicators[2]
