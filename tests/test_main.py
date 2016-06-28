@@ -3,7 +3,6 @@ import datetime
 import collections
 from dollar_tracker import plot
 from dollar_tracker import scraping
-from dollar_tracker import persitence
 from dollar_tracker import dollar_history
 
 DATE1 = datetime.date(2016, 5, 12)
@@ -51,13 +50,33 @@ def history2():
     return history
 
 
-# I have to change this test to use streams instead of paths
-def test_save_history(history):
-    persitence.save_history(history, r"test.pkl")
-    other = persitence.load_history(r"test.pkl")
-    assert (len(other.sell_prices._points.keys()) == 3)
-    assert (len(other.buy_prices._points.keys()) == 3)
-    assert (len(other.sell_prices._points[DATE1].keys()) == 2)
+def test_new_history_ctx_mngr():
+    with dollar_history.DolarHistory.from_pickle(r"test1.pkl") as history:
+        assert type(history) == dollar_history.DolarHistory
+        assert len(history.buy_prices) == 0
+        assert len(history.sell_prices) == 0
+        assert history.get_indicators_by_date() == ((0, 0, 0), (0, 0, 0))
+
+
+def test_history_not_updated_when_exception():
+    with pytest.raises(Exception):
+        with dollar_history.DolarHistory.from_pickle(r"testException.pkl") as history:
+            history.add_point("source1", scraping.DollarPoint(date=DATE1, buy_price=12.50, sell_price=15))
+            raise Exception
+    with dollar_history.DolarHistory.from_pickle(r"testException.pkl") as history:
+        assert len(history.buy_prices) == 0
+        assert len(history.sell_prices) == 0
+        assert history.get_indicators_by_date() == ((0, 0, 0), (0, 0, 0))
+
+
+def test_non_new_history_ctx_mngr():
+    with dollar_history.DolarHistory.from_pickle(r"test2.pkl") as history:
+        history.add_point("source1", scraping.DollarPoint(date=DATE1, buy_price=12.50, sell_price=15))
+        history.add_point("source2", scraping.DollarPoint(date=DATE1, buy_price=12.51, sell_price=15.01))
+    with dollar_history.DolarHistory.from_pickle(r"test2.pkl") as history:
+        assert type(history) == dollar_history.DolarHistory
+        assert len(history.buy_prices) == 1
+        assert len(history.sell_prices) == 1
 
 
 def test_limit_values(history):

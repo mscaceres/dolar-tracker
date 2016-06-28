@@ -1,6 +1,7 @@
 import collections
 import datetime
 import itertools
+import dollar_tracker.persitence
 
 
 class PriceHistory:
@@ -27,6 +28,9 @@ class PriceHistory:
 
     def get_indicators_by_date(self, date):
         return self._avg_points.get(date, 0), self._day_variations.get(date, 0), self._month_variations.get(date, 0)
+
+    def __len__(self):
+        return len(self._points)
 
     @property
     def max_points(self):
@@ -88,6 +92,10 @@ class DolarHistory:
         self.buy_prices = PriceHistory("Compra")
         self.sell_prices = PriceHistory("Venta")
 
+    @classmethod
+    def from_pickle(cls, path):
+        return dollar_tracker.persitence.PickledContext(cls, path)
+
     def add_point(self, source, dollar_point):
         self.buy_prices.add_point(source, dollar_point.date, dollar_point.buy_price)
         self.sell_prices.add_point(source, dollar_point.date, dollar_point.sell_price)
@@ -96,7 +104,7 @@ class DolarHistory:
         return self.buy_prices.get_indicators_by_date(date)
 
     def get_sell_indicators_by_date(self, date):
-        return self.buy_prices.get_indicators_by_date(date)
+        return self.sell_prices.get_indicators_by_date(date)
 
     def get_indicators_by_date(self, date=None):
         if date is None:

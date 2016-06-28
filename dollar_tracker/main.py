@@ -17,9 +17,11 @@ import json
 from docopt import docopt
 from dollar_tracker import scraping
 from dollar_tracker import plot
-from dollar_tracker import persitence
+from dollar_tracker import dollar_history
 
 log = logging.getLogger(__name__)
+
+HISTORY_FILE = "dollar_history.pkl"
 
 
 def conifg_logs(path=None):
@@ -48,21 +50,21 @@ def log_indicators(history):
     Vaiacion del mes: {5}
     """.format(*buy_indicators, *sell_indicators))
 
+
 def main():
     try:
         conifg_logs()
         args = docopt(__doc__, version='1.0.0.dev1')
-        history_path = os.path.join(args['--path'], persitence.HISTORY_FILE)
-        history = persitence.load_history(history_path)
-        if args['track']:
-            for source, scrap_page_func in scraping.get_scrap_functions():
-                history.add_point(source, scrap_page_func())
-            log_indicators(history)
-        elif args['plot']:
-            plot.make_dolar_dashboard(history)
-        persitence.save_history(history, history_path)
+        history_path = os.path.join(args['--path'], HISTORY_FILE)
+        with dollar_history.DolarHistory.from_pickle(history_path) as history:
+            if args['track']:
+                for source, scrap_page_func in scraping.get_scrap_functions():
+                    history.add_point(source, scrap_page_func())
+                log_indicators(history)
+            elif args['plot']:
+                plot.make_dolar_dashboard(history)
     except Exception as e:
-        log.exception("An error has ocurred while runing the program", e.__cause__)
+        log.exception("An error has occurred while running the program", e.__cause__)
         return 1
 
 if __name__ == "__main__":
