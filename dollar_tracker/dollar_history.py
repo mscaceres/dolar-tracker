@@ -31,7 +31,9 @@ class PriceHistory:
         self.update_month_variation(self._month_variations, self._day_variations, date)
 
     def get_indicators_by_date(self, date):
-        return self._avg_points.get(date, 0), self._day_variations.get(date, 0), self._month_variations.get(date, 0)
+        return self._avg_points.get(date, 0), \
+               self._day_variations.get(date, 0), \
+               self._month_variations.get(date.month, 0)
 
     def __len__(self):
         return len(self._points)
