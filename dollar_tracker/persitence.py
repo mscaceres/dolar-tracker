@@ -4,7 +4,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class PickledContext:
+class pickled_context:
     def __init__(self, cls, path):
         self.path = path
         self._cls = cls

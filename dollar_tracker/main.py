@@ -58,13 +58,13 @@ def main():
         history_path = os.path.join(args['--path'], HISTORY_FILE)
         with dollar_history.DolarHistory.from_pickle(history_path) as history:
             if args['track']:
-                for source, scrap_page_func in scraping.get_scrap_functions():
-                    history.add_point(source, scrap_page_func())
+                for source, value in scraping.ScrappedValues():
+                    history.add_point(source, value)
                 log_indicators(history)
             elif args['plot']:
                 plot.make_dolar_dashboard(history)
     except Exception as e:
-        log.exception("An error has occurred while running the program", e.__cause__)
+        log.exception("An error has occurred while running the program", e)
         return 1
 
 if __name__ == "__main__":

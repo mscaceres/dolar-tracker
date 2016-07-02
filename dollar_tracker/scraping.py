@@ -9,6 +9,31 @@ log = logging.getLogger(__name__)
 DollarPoint = collections.namedtuple("DollarPoint", "date, buy_price, sell_price")
 
 
+class NotEnoughtValues(Exception):
+    pass
+
+
+class ScrappedValues:
+
+    MINVALUE = 1
+
+    def __init__(self):
+        self.values = []
+        self.counts = 0
+
+        for source, scrap_func in get_scrap_functions():
+            try:
+                self.values.append((source, scrap_func()))
+                self.counts += 1
+            except urllib.error.HTTPError as e:
+                log.warn("{} can not be reached, {}".format(source, e))
+        if self.counts < self.MINVALUE:
+            raise NotEnoughtValues("Not enough values could be scrapped")
+
+    def __iter__(self):
+        return iter(self.values)
+
+
 def get_scrap_functions():
     """Look for funtions with the name 'scrap_<source>' in the current file.
     It return the pair (<source>, function)"""
@@ -21,6 +46,7 @@ def log_prices(source, date, buy_price, sell_price):
         Fecha: {1}
         Compra: {2}
         Venta: {3}""".format(source, date, buy_price, sell_price))
+
 
 def scrap_la_nacion():
     import json

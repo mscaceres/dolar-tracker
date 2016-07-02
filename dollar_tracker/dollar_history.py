@@ -1,7 +1,11 @@
 import collections
 import datetime
 import itertools
+import logging
 import dollar_tracker.persitence
+
+
+log = logging.getLogger(__name__)
 
 
 class PriceHistory:
@@ -94,9 +98,10 @@ class DolarHistory:
 
     @classmethod
     def from_pickle(cls, path):
-        return dollar_tracker.persitence.PickledContext(cls, path)
+        return dollar_tracker.persitence.pickled_context(cls, path)
 
     def add_point(self, source, dollar_point):
+        log.info("Adding point from {}: {}".format(source, dollar_point))
         self.buy_prices.add_point(source, dollar_point.date, dollar_point.buy_price)
         self.sell_prices.add_point(source, dollar_point.date, dollar_point.sell_price)
 
