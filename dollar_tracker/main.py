@@ -15,7 +15,7 @@ import logging
 import logging.config
 import json
 from docopt import docopt
-from dollar_tracker import scraping
+from dollar_tracker.scrap import scrapped_dolar_points
 from dollar_tracker import plot
 from dollar_tracker import dollar_history
 
@@ -58,7 +58,7 @@ def main():
         history_path = os.path.join(args['--path'], HISTORY_FILE)
         with dollar_history.DolarHistory.from_pickle(history_path) as history:
             if args['track']:
-                for source, value in scraping.ScrappedValues():
+                for source, value in scrapped_dolar_points():
                     history.add_point(source, value)
                 log_indicators(history)
             elif args['plot']:
