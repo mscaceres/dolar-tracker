@@ -53,7 +53,7 @@ class PriceHistory:
                 and date_to in self._avg_points
                )
 
-class DolarHistory:
+class DollarHistory:
 
     def __init__(self):
         self.buy_prices = PriceHistory("Compra")
