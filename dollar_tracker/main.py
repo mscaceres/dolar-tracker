@@ -17,14 +17,16 @@ import logging.config
 import json
 
 from docopt import docopt
-from dollar_tracker.scrap import scrapped_dolar_points, list_sources
 from dollar_tracker import plot
 from dollar_tracker.dollar_history import DollarHistory
+from dollar_tracker.commands import Command, today_avg_values
 
 from prompt_toolkit import PromptSession, print_formatted_text
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.validation import Validator
 from prompt_toolkit.formatted_text import HTML
+
+
 
 log = logging.getLogger(__name__)
 
@@ -57,27 +59,15 @@ def main():
         return 1
 
 
-def add_point():
-        with DollarHistory.from_pickle(HISTORY_FILE) as history:
-            for source, value in scrapped_dolar_points():
-                history.add_point(source, value)
-        return
+valid_cmd = Validator.from_callable(Command.is_valid, error_message="Not a valid command")
 
-
-commands = {'sources': list_sources,
-            'track': add_point,
-            'quit': None}
-
-
-def _valid_cmd(text):
-    return text in commands
-
-valid_cmd = Validator.from_callable(_valid_cmd, error_message="Not a valid command")
-
-def show_date():
+def toolbar_info():
     date = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
-    return HTML("<b>{}</b>".format(date))
+    buy, sell = today_avg_values()
+    return HTML("<b>{} <ansigreen> Compra: {:.2f} </ansigreen>  <ansired> Venta: {:.2f} </ansired></b>".format(date, buy or 0.0, sell or 0.0))
 
+
+# Each funcion we suppor in the REPL shall have a formatter for its output
 def format_text(cmd_output):
     formatted = ""
     for line in cmd_output:
@@ -86,22 +76,23 @@ def format_text(cmd_output):
 
 
 def new_main():
-    cmd_completer = WordCompleter(list(commands.keys()))
+    cmd_completer = WordCompleter(list(Command.VALID_COMMANDS.keys()))
     session = PromptSession(completer=cmd_completer,
                             complete_while_typing=True,
                             validator=valid_cmd,
-                            bottom_toolbar=show_date)
+                            bottom_toolbar=toolbar_info,
+                            validate_while_typing=False)
     while True:
-        text = session.prompt("> ")
-        cmd  = text.split()[0]
-        if cmd == 'quit':
-            print_formatted_text('Bye')
+        try:
+            text = session.prompt("--> ")
+            cmd  = text.split()[0]
+            args = text.split()[1:]
+            cmd_to_execute = Command.VALID_COMMANDS[cmd]
+            formatted_text = format_text(cmd_to_execute(*args))
+            for text in formatted_text:
+                print_formatted_text(text)
+        except KeyboardInterrupt:
             break
-        args = text.split()[1:]
-        formatted_text = format_text(commands[cmd]())
-        for text in formatted_text:
-            print_formatted_text(text)
-
 
 if __name__ == "__main__":
     sys.exit(new_main())

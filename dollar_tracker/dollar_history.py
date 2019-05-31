@@ -7,11 +7,13 @@ import dollar_tracker.persitence
 
 log = logging.getLogger(__name__)
 
+def collections_default_list():
+    return collections.defaultdict(list)
 
 class PriceHistory:
     def __init__(self, name):
         self.name = name
-        self._points = collections.defaultdict(lambda: collections.defaultdict(list))
+        self._points = collections.defaultdict(collections_default_list)
         self._max_points = collections.OrderedDict()
         self._min_points = collections.OrderedDict()
         self._avg_points = collections.OrderedDict()
@@ -23,6 +25,7 @@ class PriceHistory:
         self.update_avg_value(date, price)
 
     def points_per_day(self, date):
+        """Count the number of samples taken in a given day"""
         return sum(len(self._points[date][source])
                    for source in self._points[date])
 
@@ -53,6 +56,12 @@ class PriceHistory:
                 and date_to in self._avg_points
                )
 
+    def avg_value_for_date(self, date):
+        return self._avg_points.get(date, None)
+
+
+HISTORY_FILE = 'dollar_history.pkl'
+
 class DollarHistory:
 
     def __init__(self):
@@ -60,10 +69,17 @@ class DollarHistory:
         self.sell_prices = PriceHistory("Venta")
 
     @classmethod
-    def from_pickle(cls, path):
+    def from_pickle(cls, path=HISTORY_FILE):
         return dollar_tracker.persitence.pickled_context(cls, path)
 
     def add_point(self, source, dollar_point):
         log.info("Adding point from {}: {}".format(source, dollar_point))
         self.buy_prices.add_point(source, dollar_point.date, dollar_point.buy_price)
         self.sell_prices.add_point(source, dollar_point.date, dollar_point.sell_price)
+
+    def today_avg_values(self):
+        date = datetime.date.today()
+        buy_avg = self.buy_prices.avg_value_for_date(date)
+        sell_avg = self.sell_prices.avg_value_for_date(date)
+        return (buy_avg, sell_avg)
+

@@ -11,6 +11,8 @@ DollarPoint = collections.namedtuple("DollarPoint", "date, buy_price, sell_price
 
 class DollarScrapper(ABC):
     SCRAPPERS = {}
+    NAME = None
+    URL = None
 
     def __init_subclass__(cls):
         cls.SCRAPPERS[cls.__name__] = cls
@@ -26,7 +28,7 @@ class DollarScrapper(ABC):
 
     @property
     def source(self):
-        return self.__class__.__name__.replace('_', ' ').lower()
+        return self.__class__.scrapper_name()
 
     def log_prices(self, date, buy_price, sell_price):
         log.info("""
@@ -40,17 +42,18 @@ class DollarScrapper(ABC):
         return cls.SCRAPPERS.values()
 
     @classmethod
-    def scrappers_names(cls):
-        for scrapper in cls.scrappers():
-            yield scrapper.__name__.replace('_', ' ').title()
+    def scrapper_name(cls):
+        return cls.NAME or cls.__name__.replace('_', ' ').lower()
 
 #These could go in their own file under this package
 class La_Nacion(DollarScrapper):
 
+    NAME = 'la nacion'
+    URL = "http://contenidos.lanacion.com.ar/json/dolar?callback=jsonpCallback"
+
     def scrap_source(self):
         import json
-        url = "http://contenidos.lanacion.com.ar/json/dolar?callback=jsonpCallback"
-        json_response = str(urllib.request.urlopen(url).read())
+        json_response = str(urllib.request.urlopen(self.URL).read())
         dict = json.loads(json_response[json_response.find("{"):json_response.find("}")+1])
         buy_price = float(dict["CasaCambioCompraValue"].replace(",", "."))
         sell_price = float(dict["CasaCambioVentaValue"].replace(",", "."))
@@ -61,10 +64,11 @@ class La_Nacion(DollarScrapper):
 
 
 class Precio_Dolar(DollarScrapper):
+    NAME = 'precio dolar'
+    URL = "http://www.preciodolar.com.ar/"
 
     def scrap_source(self):
-        url = "http://www.preciodolar.com.ar/"
-        data = str(urllib.request.urlopen(url).read())
+        data = str(urllib.request.urlopen(self.URL).read())
         soup = bs4.BeautifulSoup(data, "html.parser")
         values = soup.find_all("td", class_="Estilo4")
         buy_price = float(values[0].contents[0])
@@ -74,9 +78,10 @@ class Precio_Dolar(DollarScrapper):
 
 
 class Ambito(DollarScrapper):
+    NAME = 'ambito'
+    URL = "http://www.ambito.com/economia/mercados/monedas/dolar/"
 
     def scrap_source(self):
-        url = "http://www.ambito.com/economia/mercados/monedas/dolar/"
         data = str(urllib.request.urlopen(url).read())
         soup = bs4.BeautifulSoup(data, "html.parser")
         # values = soup.find_all("div", class_="ultimo")

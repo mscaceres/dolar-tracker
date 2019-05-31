@@ -15,4 +15,5 @@ def scrapped_dolar_points():
 
 def list_sources():
     from .scrappers import DollarScrapper
-    return list(DollarScrapper.scrappers_names())
+    for scrapper in DollarScrapper.scrappers():
+        yield (scrapper.scrapper_name(), scrapper.URL)
