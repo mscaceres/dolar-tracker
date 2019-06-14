@@ -77,8 +77,8 @@ class DollarHistory:
         self.buy_prices.add_point(source, dollar_point.date, dollar_point.buy_price)
         self.sell_prices.add_point(source, dollar_point.date, dollar_point.sell_price)
 
-    def today_avg_values(self):
-        date = datetime.date.today()
+    def avg_values_for(self, date):
+        """Returns the avg price (buy, selll) for a given date"""
         buy_avg = self.buy_prices.avg_value_for_date(date)
         sell_avg = self.sell_prices.avg_value_for_date(date)
         return (buy_avg, sell_avg)

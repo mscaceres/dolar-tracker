@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import datetime
 import sys
 
 from dollar_tracker.dollar_history import DollarHistory
@@ -8,8 +9,7 @@ from docopt import docopt
 
 
 def today_avg_values():
-    with DollarHistory.from_pickle() as history:
-        return history.today_avg_values()
+    return Command.VALID_COMMANDS['avg']('today')
 
 # this could be done using decorators.. maybe the interface is cleaner than this
 class Command(ABC):
@@ -78,3 +78,33 @@ Usage:
 
     def body(self, **kwargs):
         return list_sources()
+
+
+class avg(Command):
+    """
+Shows the avg value for a given date (dd/mm/yyyy).
+Usage:
+    avg today
+    avg last_week
+    avg last_month
+    avg <date>
+    avg <num> days ago
+    """
+    def body(self, **kwargs):
+        date = None
+        today = datetime.datetime.today()
+        if kwargs['today']:
+            date = today
+        elif kwargs['last_week']:
+            date = today - datetime.timedelta(days=7)
+        elif kwargs['last_month']:
+            date = today - datetime.timedelta(days=30)
+        elif kwargs['ago']:
+            days = int(kwargs['<num>'])
+            date = today - datetime.timedelta(days=days)
+        elif kwargs['<date>']:
+            date = datetime.strptime(kwargs['date'], "%d/%m/%Y")
+        with DollarHistory.from_pickle() as history:
+            return history.avg_values_for(date)
+
+
