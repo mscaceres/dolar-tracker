@@ -8,8 +8,8 @@ from dollar_tracker.scrap import scrapped_dolar_points, list_sources
 from docopt import docopt
 
 
-def last_values():
-    return Command.VALID_COMMANDS['last']()
+def last_values(history):
+    return Command.VALID_COMMANDS['last'](history)
 
 # this could be done using decorators.. maybe the interface is cleaner than this
 class Command(ABC):
@@ -30,10 +30,13 @@ class Command(ABC):
 
     def __call__(self, *args, **kwargs):
         try:
-            args = docopt(self.__doc__, argv=args)
+            # First argument is always the history to work on
+            cmd_args = docopt(self.__doc__, argv=args[1:])
         except SystemExit:
             return []
-        return self.body(**args)
+        # set the history we have as a command attribute
+        self.history = args[0]
+        return self.body(**cmd_args)
 
     @abstractmethod
     def body(self, **kwargs):
@@ -61,10 +64,9 @@ Usage:
 
     def body(self, **kwargs):
         values = []
-        with DollarHistory.from_pickle() as history:
-            for source, value in scrapped_dolar_points():
-                history.add_point(source, value)
-                values.append((source, value.date, value.buy_price, value.sell_price))
+        for source, value in scrapped_dolar_points():
+            self.history.add_point(source, value)
+            values.append((source, value.date, value.buy_price, value.sell_price))
         return values
 
 
@@ -107,8 +109,7 @@ Usage:
             date = today - datetime.timedelta(days=days)
         elif kwargs['<date>']:
             date = datetime.strptime(kwargs['date'], "%d/%m/%Y")
-        with DollarHistory.from_pickle() as history:
-            return history.avg_values_for(date)
+        return self.history.avg_values_for(date)
 
 
 class price(Command):
@@ -138,8 +139,7 @@ Usage:
             date = today - datetime.timedelta(days=days)
         elif kwargs['<date>']:
             date = datetime.strptime(kwargs['date'], "%d/%m/%Y")
-        with DollarHistory.from_pickle() as history:
-            return history.points_for(date)
+        return self.history.points_for(date)
 
 
 class last(Command):
@@ -149,6 +149,5 @@ Usage:
     last
     """
     def body(self, **kwargs):
-        with DollarHistory.from_pickle() as history:
-            return history.last_values_for(datetime.date.today())
+        return self.history.last_values_for(datetime.date.today())
 

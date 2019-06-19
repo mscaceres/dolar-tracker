@@ -46,10 +46,6 @@ def config_logs(path=None):
 valid_cmd = Validator.from_callable(Command.is_valid, error_message="Not a valid command")
 
 
-def toolbar_info():
-    date = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
-    buy, sell = last_values()
-    return HTML("<b>{} <ansigreen> Compra: {:.2f} </ansigreen>  <ansired> Venta: {:.2f} </ansired></b>".format(date, buy or 0.0, sell or 0.0))
 
 
 # Each funcion we suppor in the REPL shall have a formatter for its output
@@ -65,31 +61,35 @@ def main():
 #        config_logs()
         args = docopt(__doc__, version='1.0.0.dev1')
         history_path = os.path.join(args['--path'], HISTORY_FILE)
-        if args['fetch'] or args['plot']:
-            with DollarHistory.from_pickle(history_path) as history:
-                if args['fetch']:
-                    for source, value in scrapped_dolar_points():
-                        history.add_point(source, value)
-                elif args['plot']:
-                    plot.make_dolar_dashboard(history)
-        else:
-            cmd_completer = WordCompleter(list(Command.VALID_COMMANDS.keys()))
-            session = PromptSession(completer=cmd_completer,
-                                    complete_while_typing=True,
-                                    validator=valid_cmd,
-                                    bottom_toolbar=toolbar_info,
-                                    validate_while_typing=False)
-            while True:
-                try:
-                    text = session.prompt("--> ")
-                    cmd  = text.split()[0]
-                    args = text.split()[1:]
-                    cmd_to_execute = Command.VALID_COMMANDS[cmd]
-                    formatted_text = format_text(cmd_to_execute(*args))
-                    for text in formatted_text:
-                        print_formatted_text(text)
-                except KeyboardInterrupt:
-                    break
+        with DollarHistory.from_pickle(history_path) as history:
+            if args['fetch']:
+                for source, value in scrapped_dolar_points():
+                    history.add_point(source, value)
+            elif args['plot']:
+                plot.make_dolar_dashboard(history)
+            else:
+                def toolbar_info():
+                    date = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+                    buy, sell = last_values(history)
+                    return HTML("<b>{} <ansigreen> Compra: {:.2f} </ansigreen>  <ansired> Venta: {:.2f} </ansired></b>".format(date, buy or 0.0, sell or 0.0))
+
+                cmd_completer = WordCompleter(list(Command.VALID_COMMANDS.keys()))
+                session = PromptSession(completer=cmd_completer,
+                                        complete_while_typing=True,
+                                        validator=valid_cmd,
+                                        bottom_toolbar=toolbar_info,
+                                        validate_while_typing=False)
+                while True:
+                    try:
+                        text = session.prompt("--> ")
+                        cmd  = text.split()[0]
+                        args = text.split()[1:]
+                        cmd_to_execute = Command.VALID_COMMANDS[cmd]
+                        formatted_text = format_text(cmd_to_execute(history, *args))
+                        for text in formatted_text:
+                            print_formatted_text(text)
+                    except KeyboardInterrupt:
+                        break
     except Exception as e:
         log.exception("An error has occurred while running the program", e)
         return 1
