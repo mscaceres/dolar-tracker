@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 import os
 import sys
@@ -29,13 +29,14 @@ setup(
     install_requires=[
         'beautifulsoup4==4.4.1',
         'plotly==1.9.6',
-        'docopt==0.6.2'
+        'docopt==0.6.2',
+        'prompt-toolkit==2.0.9'
     ],
     cmdclass={'test': PyTest},
     author_email='mauro.caceres@gmail.com',
     description='review the dollar price history from many sources in a consolidated graphic',
     long_description='',
-    packages=['dollar_tracker'],
+    packages=find_packages(),
     include_package_data=True,
     platforms='any',
     test_suite='',

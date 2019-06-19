@@ -45,9 +45,18 @@ class PriceHistory:
         current_avg = self._avg_points.get(date, 0)
         self._avg_points[date] = current_avg + (price - current_avg) / self.points_per_day(date)
 
-    def variation_btw(self, date_from, date_to):
+    def avg_variation_btw(self, date_from, date_to):
         if self.are_btw_dates_valid(date_from, date_to):
             return ((self._avg_points[date_to] - self._avg_points[date_from]) / self._avg_points[date_from]) * 100
+        else:
+            return None
+
+    def max_variation_btw(self):
+        if self.are_btw_dates_valid(date_from, date_to):
+            return ((self._avg_points[date_to] - self._avg_points[date_from]) / self._avg_points[date_from]) * 100
+        else:
+            return None
+
 
     def are_btw_dates_valid(self, date_from, date_to):
         return (len(self._avg_points) >= 2
@@ -56,8 +65,24 @@ class PriceHistory:
                 and date_to in self._avg_points
                )
 
+    def points_for_date(self, date):
+        """Returns the min, avg and max value for a given date"""
+        return (self._min_points.get(date, None),
+                self.avg_value_for_date(date),
+                self._max_points.get(date, None))
+
     def avg_value_for_date(self, date):
         return self._avg_points.get(date, None)
+
+    def last_value_for_date(self, date):
+        """Returns the max last value added
+        Given we might have many sources, take the last value added to each source and take the max value
+        """
+        sources = self._points.get(date, {})
+        if sources:
+            return max(itertools.chain.from_iterable(sources.values()))
+        else:
+            return None
 
 
 HISTORY_FILE = 'dollar_history.pkl'
@@ -82,4 +107,16 @@ class DollarHistory:
         buy_avg = self.buy_prices.avg_value_for_date(date)
         sell_avg = self.sell_prices.avg_value_for_date(date)
         return (buy_avg, sell_avg)
+
+    def last_values_for(self, date):
+        """Returns tha maximun of the last samples taken"""
+        buy_last = self.buy_prices.last_value_for_date(date)
+        sell_last = self.sell_prices.last_value_for_date(date)
+        return (buy_last, sell_last)
+
+    def points_for(self, date):
+        """Returns the min, avg, max for a given date"""
+        buy_points = self.buy_prices.points_for_date(date)
+        sell_points = self.sell_prices.points_for_date(date)
+        return (buy_points, sell_points)
 
