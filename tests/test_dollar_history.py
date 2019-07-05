@@ -67,3 +67,22 @@ def test_points_for_date():
     single_price.add_point('source2', DATE1, 16)
     single_price.add_point('source3', DATE1, 17)
     assert single_price.points_for_date(DATE1) == (12, 14.5 ,17)
+
+
+def test_history_to_dict(history):
+    data = history.to_dict()
+    assert 'Compra' in data
+    assert 'Venta' in data
+    for price in (data['Compra'], data['Venta']):
+        for field in ('name', 'all_points', 'max_points', 'min_points', 'avg_points'):
+            assert field in price
+
+
+def test_history_from_dict(history):
+    data = history.to_dict()
+    from_data_history = DollarHistory.from_dict(data)
+    attributes = ('_points', '_max_points', '_min_points', '_avg_points')
+    for attribute in attributes:
+        for price_attr in ('buy_prices', 'sell_prices'):
+           assert (getattr(getattr(from_data_history, price_attr), attribute) ==
+                   getattr(getattr(history, price_attr), attribute))

@@ -1,13 +1,15 @@
 """dollar-tracker: REPL to review the dollar price history from many sources
 
 Usage:
-    dollar-tracker (fetch|plot) [--path=<path>]
-    dollar-tracker
+    dollar-tracker (fetch|plot) [--path=<path>] [(--pkl|--json)]
+    dollar-tracker [(--pkl|--json)]
 
 Options:
     -h --help   shows this screen
     --version   shows version
-    --path=<path>   specifies a path to save a new data o plot from there. [default: ./]
+    --path=<path>   specifies a path to save a new data o plot from there. [default: ~/.config/dollar-tracker/dollar_history]
+    --json  saves the information in json format [default: True]
+    --pkl   saves the information in pickle format
 """
 
 import datetime
@@ -16,6 +18,7 @@ import os.path
 import logging
 import logging.config
 import json
+from pathlib import Path
 
 from docopt import docopt
 from dollar_tracker import plot
@@ -29,8 +32,6 @@ from prompt_toolkit.formatted_text import HTML
 
 
 log = logging.getLogger(__name__)
-
-HISTORY_FILE = "dollar_history.pkl"
 
 
 def config_logs(path=None):
@@ -46,8 +47,6 @@ def config_logs(path=None):
 valid_cmd = Validator.from_callable(Command.is_valid, error_message="Not a valid command")
 
 
-
-
 # Each funcion we suppor in the REPL shall have a formatter for its output
 def format_text(cmd_output):
     formatted = ""
@@ -56,12 +55,22 @@ def format_text(cmd_output):
         yield HTML(formatted)
 
 
+def handle_path(path):
+    history_path = Path(path)
+    if not history_path.exists():
+        history_path.parent.mkdir(parents=True)
+    return history_path
+
+
 def main():
     try:
 #        config_logs()
         args = docopt(__doc__, version='1.0.0.dev1')
-        history_path = os.path.join(args['--path'], HISTORY_FILE)
-        with DollarHistory.from_pickle(history_path) as history:
+        ext = 'pkl' if args['--pkl'] else 'json'
+        import pdb;pdb.set_trace()
+        history_path = handle_path(f'{args["--path"]}.{ext}')
+        history_context = getattr(DollarHistory, f'{ext}_context')
+        with history_context(history_path) as history:
             if args['fetch']:
                 for source, value in scrapped_dolar_points():
                     history.add_point(source, value)
@@ -81,9 +90,8 @@ def main():
                                         validate_while_typing=False)
                 while True:
                     try:
-                        text = session.prompt("--> ")
-                        cmd  = text.split()[0]
-                        args = text.split()[1:]
+                        text = session.prompt("dollar-tracker --> ")
+                        cmd, *args  = text.split()
                         cmd_to_execute = Command.VALID_COMMANDS[cmd]
                         formatted_text = format_text(cmd_to_execute(history, *args))
                         for text in formatted_text:

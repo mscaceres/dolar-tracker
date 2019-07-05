@@ -51,9 +51,9 @@ class PriceHistory:
         else:
             return None
 
-    def max_variation_btw(self):
+    def max_variation_btw(self, date_from, date_to):
         if self.are_btw_dates_valid(date_from, date_to):
-            return ((self._avg_points[date_to] - self._avg_points[date_from]) / self._avg_points[date_from]) * 100
+            return ((self._max_points[date_to] - self._max_points[date_from]) / self._max_points[date_from]) * 100
         else:
             return None
 
@@ -84,8 +84,23 @@ class PriceHistory:
         else:
             return None
 
+    def to_dict(self):
+        return {'name': self.name,
+                'all_points': self._points,
+                'max_points': self._max_points,
+                'min_points': self._min_points,
+                'avg_points': self._avg_points
+               }
 
-HISTORY_FILE = 'dollar_history.pkl'
+    @classmethod
+    def from_dict(cls, data_dict):
+        obj = cls(data_dict['name'])
+        obj._points = data_dict['all_points']
+        obj._max_points = data_dict['max_points']
+        obj._min_points = data_dict['min_points']
+        obj._avg_points = data_dict['avg_points']
+        return obj
+
 
 class DollarHistory:
 
@@ -94,8 +109,24 @@ class DollarHistory:
         self.sell_prices = PriceHistory("Venta")
 
     @classmethod
-    def from_pickle(cls, path=HISTORY_FILE):
+    def pkl_context(cls, path):
         return dollar_tracker.persitence.pickled_context(cls, path)
+
+    @classmethod
+    def json_context(cls, path):
+        return dollar_tracker.persitence.json_context(cls, path)
+
+    @classmethod
+    def from_dict(cls, data_dict):
+        obj = cls()
+        obj.buy_prices = PriceHistory.from_dict(data_dict[obj.buy_prices.name])
+        obj.sell_prices = PriceHistory.from_dict(data_dict[obj.sell_prices.name])
+        return obj
+
+    def to_dict(self):
+        return {self.buy_prices.name: self.buy_prices.to_dict(),
+                self.sell_prices.name: self.sell_prices.to_dict(),
+               }
 
     def add_point(self, source, dollar_point):
         log.info("Adding point from {}: {}".format(source, dollar_point))

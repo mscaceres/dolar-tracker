@@ -150,4 +150,3 @@ Usage:
     """
     def body(self, **kwargs):
         return self.history.last_values_for(datetime.date.today())
-
