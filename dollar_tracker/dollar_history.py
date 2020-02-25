@@ -1,5 +1,4 @@
 import collections
-import datetime
 import itertools
 import logging
 import dollar_tracker.persitence
@@ -7,8 +6,10 @@ import dollar_tracker.persitence
 
 log = logging.getLogger(__name__)
 
+
 def collections_default_list():
     return collections.defaultdict(list)
+
 
 class PriceHistory:
     def __init__(self, name):
@@ -19,12 +20,14 @@ class PriceHistory:
         self._avg_points = collections.OrderedDict()
 
     def add_point(self, source, date, price):
+        date = date.isoformat()
         self._points[date][source].append(price)
         self._max_points[date] = max(price, self._max_points.get(date, price))
         self._min_points[date] = min(price, self._min_points.get(date, price))
-        self.update_avg_value(date, price)
+        self._update_avg_value(date, price)
 
-    def points_per_day(self, date):
+    # we could have already saved so we dont need to calculate it everytime
+    def _points_per_day(self, date):
         """Count the number of samples taken in a given day"""
         return sum(len(self._points[date][source])
                    for source in self._points[date])
@@ -41,43 +44,44 @@ class PriceHistory:
     def avg_points(self):
         return self._avg_points.items()
 
-    def update_avg_value(self, date, price):
+    def _update_avg_value(self, date, price):
         current_avg = self._avg_points.get(date, 0)
-        self._avg_points[date] = current_avg + (price - current_avg) / self.points_per_day(date)
+        self._avg_points[date] = current_avg + (price - current_avg) / self._points_per_day(date)
 
     def avg_variation_btw(self, date_from, date_to):
-        if self.are_btw_dates_valid(date_from, date_to):
-            return ((self._avg_points[date_to] - self._avg_points[date_from]) / self._avg_points[date_from]) * 100
+        if date_from <= date_to:
+            try:
+                return ((self._avg_points[date_to] - self._avg_points[date_from]) / self._avg_points[date_from]) * 100
+            except KeyError:
+                return None
         else:
-            return None
+            raise ValueError(f"From date {date_from} is not before To date {date_to}")
 
     def max_variation_btw(self, date_from, date_to):
-        if self.are_btw_dates_valid(date_from, date_to):
-            return ((self._max_points[date_to] - self._max_points[date_from]) / self._max_points[date_from]) * 100
+        if date_from <= date_to:
+            try:
+                return ((self._max_points[date_to] - self._max_points[date_from]) / self._max_points[date_from]) * 100
+            except KeyError:
+                return None
         else:
-            return None
-
-
-    def are_btw_dates_valid(self, date_from, date_to):
-        return (len(self._avg_points) >= 2
-                and date_from <= date_to
-                and date_from in self._avg_points
-                and date_to in self._avg_points
-               )
+            raise ValueError(f"From date {date_from} is not before To date {date_to}")
 
     def points_for_date(self, date):
         """Returns the min, avg and max value for a given date"""
+        date = date.isoformat()
         return (self._min_points.get(date, None),
                 self.avg_value_for_date(date),
                 self._max_points.get(date, None))
 
     def avg_value_for_date(self, date):
+        date = date.isoformat()
         return self._avg_points.get(date, None)
 
     def last_value_for_date(self, date):
         """Returns the max last value added
         Given we might have many sources, take the last value added to each source and take the max value
         """
+        date = date.isoformat()
         sources = self._points.get(date, {})
         if sources:
             return max(itertools.chain.from_iterable(sources.values()))
@@ -90,15 +94,15 @@ class PriceHistory:
                 'max_points': self._max_points,
                 'min_points': self._min_points,
                 'avg_points': self._avg_points
-               }
+                }
 
     @classmethod
     def from_dict(cls, data_dict):
         obj = cls(data_dict['name'])
-        obj._points = data_dict['all_points']
-        obj._max_points = data_dict['max_points']
-        obj._min_points = data_dict['min_points']
-        obj._avg_points = data_dict['avg_points']
+        obj._points = collections.defaultdict(collections_default_list, data_dict['all_points'])
+        obj._max_points = collections.OrderedDict(data_dict['max_points'])
+        obj._min_points = collections.OrderedDict(data_dict['min_points'])
+        obj._avg_points = collections.OrderedDict(data_dict['avg_points'])
         return obj
 
 
@@ -117,6 +121,14 @@ class DollarHistory:
         return dollar_tracker.persitence.json_context(cls, path)
 
     @classmethod
+    def ext_context(cls, ext, history_path):
+        try:
+            context_builder = getattr(cls, f'{ext}_context')
+        except AttributeError:
+            raise ValueError(f"Extention {ext} is not supported")
+        return context_builder(history_path)
+
+    @classmethod
     def from_dict(cls, data_dict):
         obj = cls()
         obj.buy_prices = PriceHistory.from_dict(data_dict[obj.buy_prices.name])
@@ -126,7 +138,7 @@ class DollarHistory:
     def to_dict(self):
         return {self.buy_prices.name: self.buy_prices.to_dict(),
                 self.sell_prices.name: self.sell_prices.to_dict(),
-               }
+                }
 
     def add_point(self, source, dollar_point):
         log.info("Adding point from {}: {}".format(source, dollar_point))
@@ -150,4 +162,3 @@ class DollarHistory:
         buy_points = self.buy_prices.points_for_date(date)
         sell_points = self.sell_prices.points_for_date(date)
         return (buy_points, sell_points)
-

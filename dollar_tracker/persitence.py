@@ -13,7 +13,8 @@ class pickled_context:
             with open(self.path, 'rb') as input:
                 self.obj = pickle.load(input)
         except IOError:
-            log.warning("Path {0} not found. Creating a new {1} instance".format(self.path, self._cls.__name__))
+            log.warning("Path {0} not found. Creating a new {1} instance".format(self.path,
+                                                                                 self._cls.__name__))
             self.obj = self._cls()
 
     def __enter__(self):
@@ -32,7 +33,7 @@ class json_context:
         self.path = path
         self._cls = cls
         try:
-            with open(self.path, 'rb') as input:
+            with open(self.path, 'r') as input:
                 data = json.load(input)
                 self.obj = self._cls.from_dict(data)
         except IOError:
@@ -44,7 +45,7 @@ class json_context:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None or exc_type == SystemExit:
-            with open(self.path, 'wb') as output:
-                json.dump(self.obj.to_json(), output)
+            with open(self.path, 'w') as output:
+                json.dump(self.obj.to_dict(), output, indent=2)
                 log.info("Saving {} to {}".format(self.obj.__class__.__name__, self.path))
         return False

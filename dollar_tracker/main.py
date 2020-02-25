@@ -1,30 +1,31 @@
 """dollar-tracker: REPL to review the dollar price history from many sources
 
 Usage:
-    dollar-tracker (fetch|plot) [--path=<path>] [(--pkl|--json)]
-    dollar-tracker [(--pkl|--json)]
+    dollar-tracker (fetch|plot) [--path=<path>]
+    dollar-tracker migrate (--to_json|--to_pkl) --path=<path>
+    dollar-tracker [--path=<path>]
 
 Options:
     -h --help   shows this screen
     --version   shows version
-    --path=<path>   specifies a path to save a new data o plot from there. [default: ~/.config/dollar-tracker/dollar_history]
-    --json  saves the information in json format [default: True]
-    --pkl   saves the information in pickle format
+    --path=<path>   specifies the file path where data will be saved. [default: ~/.config/dollar-tracker/dollar_history.json]
+    --to_json   migrates data from a pickled file to a json format file.
+    --to_pkl    migrates data from a json file to a pickle format file.
 """
 
 import datetime
-import sys
-import os.path
 import logging
 import logging.config
 import json
 from pathlib import Path
+import sys
 
 from docopt import docopt
 from dollar_tracker import plot
 from dollar_tracker.dollar_history import DollarHistory
 from dollar_tracker.commands import Command, last_values
 from dollar_tracker.scrap import scrapped_dolar_points
+from dollar_tracker.migrate_data_format import to_json, to_pickle
 from prompt_toolkit import PromptSession, print_formatted_text
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.validation import Validator
@@ -35,7 +36,7 @@ log = logging.getLogger(__name__)
 
 
 def config_logs(path=None):
-    #TODO figure out way to run it from a local machine
+    # TODO figure out way to run it from a local machine
     if path is None:
         path = "/root/.config/dollar-tracker/logs.json"
     with open(path) as f:
@@ -62,42 +63,74 @@ def handle_path(path):
     return history_path
 
 
-def main():
-    try:
-#        config_logs()
-        args = docopt(__doc__, version='1.0.0.dev1')
-        ext = 'pkl' if args['--pkl'] else 'json'
-        import pdb;pdb.set_trace()
-        history_path = handle_path(f'{args["--path"]}.{ext}')
-        history_context = getattr(DollarHistory, f'{ext}_context')
-        with history_context(history_path) as history:
-            if args['fetch']:
-                for source, value in scrapped_dolar_points():
-                    history.add_point(source, value)
-            elif args['plot']:
-                plot.make_dolar_dashboard(history)
-            else:
-                def toolbar_info():
-                    date = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
-                    buy, sell = last_values(history)
-                    return HTML("<b>{} <ansigreen> Compra: {:.2f} </ansigreen>  <ansired> Venta: {:.2f} </ansired></b>".format(date, buy or 0.0, sell or 0.0))
+def get_file_ext(path):
+    file_format = path.suffix
+    if not file_format:
+        raise ValueError("File extention could not be determined")
+    return file_format[1:]
 
-                cmd_completer = WordCompleter(list(Command.VALID_COMMANDS.keys()))
-                session = PromptSession(completer=cmd_completer,
-                                        complete_while_typing=True,
-                                        validator=valid_cmd,
-                                        bottom_toolbar=toolbar_info,
-                                        validate_while_typing=False)
-                while True:
-                    try:
-                        text = session.prompt("dollar-tracker --> ")
-                        cmd, *args  = text.split()
-                        cmd_to_execute = Command.VALID_COMMANDS[cmd]
-                        formatted_text = format_text(cmd_to_execute(history, *args))
-                        for text in formatted_text:
-                            print_formatted_text(text)
-                    except KeyboardInterrupt:
-                        break
+
+def migrate_history_data(args):
+    print("About to migrate history data")
+    file_to_migrate = args['--path']
+    if not Path(file_to_migrate).exists():
+        raise FileNotFoundError(f"{file_to_migrate} was not found")
+    if args['--to_json']:
+        print("From pickle format to json format")
+        to_json(file_to_migrate)
+    elif args['--to_pickle']:
+        print("From json format to pickle format")
+        to_pickle(file_to_migrate)
+    else:
+        raise ValueError("Option not recognized")
+    print("Done!")
+
+
+def run_commands(args):
+    history_path = handle_path(args["--path"])
+    file_ext = get_file_ext(history_path)
+    with DollarHistory.ext_context(file_ext, history_path) as history:
+        if args['fetch']:
+            for source, value in scrapped_dolar_points():
+                history.add_point(source, value)
+        elif args['plot']:
+            plot.make_dolar_dashboard(history)
+        else:
+            def toolbar_info():
+                date = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+                buy, sell = last_values(history)
+                return HTML("<b>{} <ansigreen> Compra: {:.2f} </ansigreen>"
+                            "<ansired> Venta: {:.2f} </ansired></b>"
+                            .format(date, buy or 0.0, sell or 0.0))
+
+            cmd_completer = WordCompleter(list(Command.VALID_COMMANDS.keys()))
+            session = PromptSession(completer=cmd_completer,
+                                    complete_while_typing=True,
+                                    validator=valid_cmd,
+                                    bottom_toolbar=toolbar_info,
+                                    validate_while_typing=False)
+            while True:
+                try:
+                    text = session.prompt("dollar-tracker --> ")
+                    cmd, *args = text.split()
+                    cmd_to_execute = Command.VALID_COMMANDS[cmd]
+                    formatted_text = format_text(cmd_to_execute(history, *args))
+                    for text in formatted_text:
+                        print_formatted_text(text)
+                except KeyboardInterrupt:
+                    break
+
+
+def main(args=None):
+    try:
+        if not args:
+            args = sys.argv[1:]
+        # config_logs()
+        args = docopt(__doc__, argv=args, version='1.0.0.dev1')
+        if args['migrate']:
+            migrate_history_data(args)
+        else:
+            run_commands(args)
     except Exception as e:
         log.exception("An error has occurred while running the program", e)
         return 1
